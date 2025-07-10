@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOTP QR Code Generator</title>
     <style>
+        /* Your existing styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -332,8 +333,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
+        // Check if QRCode library loaded
+        function checkLibraryLoaded() {
+            return typeof QRCode !== 'undefined';
+        }
+
         document.getElementById('totpForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Check if QRCode library is available
+            if (!checkLibraryLoaded()) {
+                showError('QR Code library failed to load. Please refresh the page and try again.');
+                return;
+            }
             
             const secret = document.getElementById('secret').value.trim().replace(/\s/g, '');
             const account = document.getElementById('account').value.trim() || 'user';
@@ -344,9 +356,16 @@
                 return;
             }
 
-            // Validate secret (should be base32)
-            if (!/^[A-Z2-7]+=*$/i.test(secret)) {
-                showError('Invalid TOTP secret format. Please use a valid Base32 string.');
+            // Improved secret validation (Base32)
+            const cleanSecret = secret.replace(/\s/g, '').toUpperCase();
+            if (!/^[A-Z2-7]+=*$/.test(cleanSecret)) {
+                showError('Invalid TOTP secret format. Please use a valid Base32 string (A-Z, 2-7).');
+                return;
+            }
+
+            // Check secret length (should be reasonable)
+            if (cleanSecret.length < 16) {
+                showError('TOTP secret seems too short. Please check your secret key.');
                 return;
             }
 
@@ -356,7 +375,9 @@
 
             try {
                 // Create the otpauth URI
-                const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secret.toUpperCase()}&issuer=${encodeURIComponent(issuer)}`;
+                const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${cleanSecret}&issuer=${encodeURIComponent(issuer)}`;
+                
+                console.log('Generated URI:', uri); // Debug log
                 
                 // Generate QR code
                 const canvas = document.getElementById('qrcode');
@@ -366,18 +387,19 @@
                     color: {
                         dark: '#2d3748',
                         light: '#ffffff'
-                    }
+                    },
+                    errorCorrectionLevel: 'M'
                 });
 
                 // Display the secret
-                document.getElementById('secretDisplay').textContent = secret.toUpperCase();
+                document.getElementById('secretDisplay').textContent = cleanSecret;
                 
                 showResult();
                 showLoading(false);
                 
             } catch (error) {
                 console.error('Error generating QR code:', error);
-                showError('Failed to generate QR code. Please check your input and try again.');
+                showError(`Failed to generate QR code: ${error.message || 'Unknown error'}`);
                 showLoading(false);
             }
         });
@@ -423,10 +445,21 @@
             // Remove spaces and convert to uppercase
             let value = e.target.value.replace(/\s/g, '').toUpperCase();
             
+            // Filter out invalid characters
+            value = value.replace(/[^A-Z2-7]/g, '');
+            
             // Add spaces every 4 characters for readability
             value = value.replace(/(.{4})/g, '$1 ').trim();
             
             e.target.value = value;
+        });
+
+        // Check if library loaded on page load
+        window.addEventListener('load', function() {
+            if (!checkLibraryLoaded()) {
+                console.error('QRCode library failed to load');
+                showError('QR Code library failed to load. Please refresh the page.');
+            }
         });
     </script>
 </body>
