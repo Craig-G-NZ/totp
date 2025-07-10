@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOTP QR Code Generator</title>
     <style>
-        /* Same styles as above */
         * {
             margin: 0;
             padding: 0;
@@ -13,24 +12,45 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
         }
 
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
             overflow: hidden;
+            position: relative;
         }
 
         .container::before {
@@ -39,30 +59,57 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            padding: 40px 40px 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
         }
 
         .header h1 {
-            color: #2d3748;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
+            color: #1a202c;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header p {
-            color: #718096;
-            font-size: 1.1rem;
-            font-weight: 400;
+            color: #4a5568;
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .form-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            position: relative;
         }
 
         .form-group label {
@@ -71,231 +118,566 @@
             color: #2d3748;
             font-weight: 600;
             font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .form-control {
             width: 100%;
-            padding: 15px 20px;
+            padding: 16px 20px;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 16px;
             font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #f7fafc;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #ffffff, #f7fafc);
+            box-shadow: 
+                inset 2px 2px 5px rgba(0, 0, 0, 0.1),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.8);
         }
 
         .form-control:focus {
             outline: none;
             border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
+            background: #ffffff;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                inset 2px 2px 5px rgba(102, 126, 234, 0.1),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.9);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .btn:disabled {
+        .form-control::placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        /* 3D Button Styles */
+        .btn-3d {
+            position: relative;
+            width: 100%;
+            padding: 18px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 16px rgba(102, 126, 234, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .btn-3d::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-3d:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 24px rgba(102, 126, 234, 0.4),
+                0 8px 16px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-3d:hover::before {
+            left: 100%;
+        }
+
+        .btn-3d:active {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 12px rgba(102, 126, 234, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-3d:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+            box-shadow: 
+                0 4px 8px rgba(102, 126, 234, 0.2),
+                0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #f7fafc, #edf2f7);
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-column::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            color: #a0aec0;
+            z-index: 1;
+        }
+
+        .placeholder-content .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .placeholder-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .placeholder-content p {
+            font-size: 1rem;
+            line-height: 1.6;
         }
 
         .qr-result {
-            margin-top: 40px;
-            text-align: center;
-            padding: 30px;
-            background: #f7fafc;
-            border-radius: 16px;
-            border: 2px dashed #cbd5e0;
             display: none;
+            text-align: center;
+            width: 100%;
+            z-index: 1;
         }
 
         .qr-result.show {
             display: block;
-            animation: fadeInUp 0.5s ease;
+            animation: slideInRight 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @keyframes fadeInUp {
+        @keyframes slideInRight {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateX(30px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
         .qr-result h3 {
             color: #2d3748;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
+            margin-bottom: 24px;
+            font-size: 1.4rem;
+            font-weight: 700;
         }
 
         .qr-code-container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 20px;
             display: inline-block;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            box-shadow: 
+                0 16px 32px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .secret-display {
-            background: #edf2f7;
-            padding: 15px;
+        .qr-code-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(240, 147, 251, 0.05));
+            z-index: -1;
+        }
+
+        .qr-code-container img {
+            max-width: 100%;
+            height: auto;
             border-radius: 8px;
+        }
+
+        .info-card {
+            background: linear-gradient(145deg, #ffffff, #f7fafc);
+            padding: 20px;
+            border-radius: 16px;
             margin-top: 20px;
             border-left: 4px solid #667eea;
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
-        .secret-display code {
-            background: #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+        .info-card strong {
             color: #2d3748;
-            word-break: break-all;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .error {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 15px;
+        .info-card code {
+            background: linear-gradient(145deg, #e2e8f0, #edf2f7);
+            padding: 8px 12px;
             border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #e53e3e;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        .uri-display {
-            background: #e6fffa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #38b2ac;
-            text-align: left;
-        }
-
-        .uri-display code {
-            background: #ffffff;
-            padding: 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
             color: #2d3748;
             word-break: break-all;
             display: block;
             margin-top: 8px;
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .qr-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
+        .uri-card {
+            background: linear-gradient(145deg, #e6fffa, #b2f5ea);
+            border-left-color: #38b2ac;
+        }
+
+        .error {
+            background: linear-gradient(145deg, #fed7d7, #feb2b2);
+            color: #c53030;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 4px solid #e53e3e;
+            display: none;
+            box-shadow: 0 4px 8px rgba(229, 62, 62, 0.2);
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            z-index: 1;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #4a5568;
             font-weight: 600;
+            font-size: 1.1rem;
         }
 
-        .qr-link:hover {
-            background: #5a67d8;
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 20px;
+            }
+
+            .header {
+                padding: 30px 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .form-control {
+                padding: 14px 16px;
+            }
+
+            .btn-3d {
+                padding: 16px 24px;
+                font-size: 1rem;
+            }
+
+            .result-column {
+                padding: 30px 20px;
+            }
+
+            .qr-code-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 16px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .main-content {
+                padding: 15px;
+                gap: 20px;
+            }
+
+            .form-control {
+                padding: 12px 14px;
+                font-size: 0.95rem;
+            }
+
+            .btn-3d {
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Success animation */
+        .success-pulse {
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+            }
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #2d3748;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2d3748 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🔐 TOTP Generator</h1>
-            <p>Generate QR codes for Time-based One-Time Password authentication</p>
+            <p>Professional QR Code Generator for Time-based One-Time Password Authentication</p>
         </div>
 
-        <form id="totpForm">
-            <div class="form-group">
-                <label for="secret">TOTP Secret *</label>
-                <input 
-                    type="text" 
-                    id="secret" 
-                    name="secret" 
-                    class="form-control" 
-                    placeholder="Enter your TOTP secret key"
-                    required
-                >
+        <div class="main-content">
+            <!-- Left Column - Form -->
+            <div class="form-column">
+                <form id="totpForm">
+                    <div class="form-group">
+                        <label for="secret">
+                            🔑 TOTP Secret *
+                            <span class="tooltip">
+                                ℹ️
+                                <span class="tooltiptext">Base32 encoded secret key (A-Z, 2-7)</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="secret" 
+                            name="secret" 
+                            class="form-control" 
+                            placeholder="Enter your TOTP secret key (e.g., JBSWY3DPEHPK3PXP)"
+                            required
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account">
+                            👤 Account Name
+                            <span class="tooltip">
+                                ℹ️
+                                <span class="tooltiptext">Usually your email or username</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="account" 
+                            name="account" 
+                            class="form-control" 
+                            placeholder="e.g., john.doe@example.com"
+                            value="user@example.com"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issuer">
+                            🏢 Issuer
+                            <span class="tooltip">
+                                ℹ️
+                                <span class="tooltiptext">Service or company name</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="issuer" 
+                            name="issuer" 
+                            class="form-control" 
+                            placeholder="e.g., MyCompany"
+                            value="MyApp"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn-3d" id="generateBtn">
+                        <span>🚀 Generate QR Code</span>
+                    </button>
+                </form>
+
+                <div class="error" id="error"></div>
+
+                <!-- Instructions Card -->
+                <div class="info-card">
+                    <strong>📋 Instructions</strong>
+                    <p style="margin-top: 8px; color: #4a5568; line-height: 1.6;">
+                        1. Enter your TOTP secret key<br>
+                        2. Customize account name and issuer<br>
+                        3. Click generate to create QR code<br>
+                        4. Scan with your authenticator app
+                    </p>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="account">Account Name</label>
-                <input 
-                    type="text" 
-                    id="account" 
-                    name="account" 
-                    class="form-control" 
-                    placeholder="e.g., john.doe@example.com"
-                >
-            </div>
+            <!-- Right Column - Results -->
+            <div class="result-column">
+                <div class="placeholder-content" id="placeholder">
+                    <div class="icon">📱</div>
+                    <h3>QR Code Preview</h3>
+                    <p>Enter your TOTP details on the left and click "Generate QR Code" to see your scannable QR code here.</p>
+                </div>
 
-            <div class="form-group">
-                <label for="issuer">Issuer</label>
-                <input 
-                    type="text" 
-                    id="issuer" 
-                    name="issuer" 
-                    class="form-control" 
-                    placeholder="e.g., MyCompany"
-                >
-            </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating your QR code...</p>
+                </div>
 
-            <button type="submit" class="btn" id="generateBtn">
-                Generate QR Code
-            </button>
-        </form>
-
-        <div class="error" id="error"></div>
-
-        <div class="qr-result" id="qrResult">
-            <h3>📱 Use this QR code with your authenticator app</h3>
-            <div class="qr-code-container">
-                <img id="qrcode" alt="TOTP QR Code" style="max-width: 100%; height: auto;">
-            </div>
-            <div class="secret-display">
-                <strong>Manual Entry Secret:</strong><br>
-                <code id="secretDisplay"></code>
-            </div>
-            <div class="uri-display">
-                <strong>TOTP URI:</strong>
-                <code id="uriDisplay"></code>
-                <a id="qrLink" class="qr-link" target="_blank">Generate QR Code Online</a>
+                <div class="qr-result" id="qrResult">
+                    <h3>📱 Scan with your authenticator app</h3>
+                    <div class="qr-code-container">
+                        <div id="qrcode"></div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <strong>🔐 Manual Entry Secret</strong>
+                        <code id="secretDisplay"></code>
+                    </div>
+                    
+                    <div class="info-card uri-card">
+                        <strong>🔗 Generated URI</strong>
+                        <code id="uriDisplay"></code>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Load QR code library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script>
-        document.getElementById('totpForm').addEventListener('submit', function(e) {
+        // Check if QR code library loaded
+        let qrLibraryLoaded = false;
+        
+        // Try to load the library and set flag
+        window.addEventListener('load', function() {
+            if (typeof qrcode !== 'undefined') {
+                qrLibraryLoaded = true;
+                console.log('QR code library loaded successfully');
+            } else {
+                showError('QR code library failed to load. Please refresh the page.');
+            }
+        });
+
+        document.getElementById('totpForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const secret = document.getElementById('secret').value.trim().replace(/\s/g, '');
-            const account = document.getElementById('account').value.trim() || 'user';
+            const account = document.getElementById('account').value.trim() || 'user@example.com';
             const issuer = document.getElementById('issuer').value.trim() || 'MyApp';
             
             if (!secret) {
@@ -303,50 +685,93 @@
                 return;
             }
 
-            // Validate secret (Base32)
-            const cleanSecret = secret.replace(/\s/g, '').toUpperCase();
-            if (!/^[A-Z2-7]+=*$/.test(cleanSecret)) {
+            // Validate secret (should be base32)
+            if (!/^[A-Z2-7]+=*$/i.test(secret)) {
                 showError('Invalid TOTP secret format. Please use a valid Base32 string (A-Z, 2-7).');
                 return;
             }
 
-            if (cleanSecret.length < 16) {
-                showError('TOTP secret seems too short. Please check your secret key.');
+            if (!qrLibraryLoaded) {
+                showError('QR code library not loaded. Please refresh the page and try again.');
                 return;
             }
 
+            showLoading(true);
             hideError();
+            hideResult();
+            hidePlaceholder();
 
             try {
                 // Create the otpauth URI
-                const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${cleanSecret}&issuer=${encodeURIComponent(issuer)}`;
+                const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secret.toUpperCase()}&issuer=${encodeURIComponent(issuer)}`;
                 
-                console.log('Generated URI:', uri);
+                // Generate QR code using qrcode-generator library
+                const qr = qrcode(0, 'M');
+                qr.addData(uri);
+                qr.make();
+                
+                // Create the QR code as SVG with custom styling
+                const qrSvg = qr.createSvgTag({
+                    cellSize: 4,
+                    margin: 4,
+                    scalable: true
+                });
+                
+                // Display the QR code
+                document.getElementById('qrcode').innerHTML = qrSvg;
+                
+                // Style the SVG
+                const svgElement = document.querySelector('#qrcode svg');
+                if (svgElement) {
+                    svgElement.style.width = '100%';
+                    svgElement.style.height = 'auto';
+                    svgElement.style.maxWidth = '256px';
+                }
                 
                 // Display the secret and URI
-                document.getElementById('secretDisplay').textContent = cleanSecret;
+                document.getElementById('secretDisplay').textContent = secret.toUpperCase();
                 document.getElementById('uriDisplay').textContent = uri;
                 
-                // Generate QR code using online service
-                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(uri)}`;
-                document.getElementById('qrcode').src = qrCodeUrl;
-                
-                // Set up the online QR generator link
-                const qrLink = document.getElementById('qrLink');
-                qrLink.href = `https://www.qr-code-generator.com/solutions/text-qr-code/?text=${encodeURIComponent(uri)}`;
-                
                 showResult();
+                showLoading(false);
+                
+                // Add success animation to button
+                const btn = document.getElementById('generateBtn');
+                btn.classList.add('success-pulse');
+                setTimeout(() => btn.classList.remove('success-pulse'), 600);
                 
             } catch (error) {
                 console.error('Error generating QR code:', error);
-                showError(`Failed to generate QR code: ${error.message || 'Unknown error'}`);
+                showError(`Failed to generate QR code: ${error.message}`);
+                showLoading(false);
+                showPlaceholder();
             }
         });
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const btn = document.getElementById('generateBtn');
+            
+            if (show) {
+                loading.classList.add('show');
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳ Generating...</span>';
+            } else {
+                loading.classList.remove('show');
+                btn.disabled = false;
+                btn.innerHTML = '<span>🚀 Generate QR Code</span>';
+            }
+        }
 
         function showError(message) {
             const error = document.getElementById('error');
             error.textContent = message;
             error.classList.add('show');
+            
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                error.classList.remove('show');
+            }, 5000);
         }
 
         function hideError() {
@@ -359,12 +784,57 @@
             result.classList.add('show');
         }
 
+        function hideResult() {
+            const result = document.getElementById('qrResult');
+            result.classList.remove('show');
+        }
+
+        function showPlaceholder() {
+            const placeholder = document.getElementById('placeholder');
+            placeholder.style.display = 'block';
+        }
+
+        function hidePlaceholder() {
+            const placeholder = document.getElementById('placeholder');
+            placeholder.style.display = 'none';
+        }
+
         // Auto-format secret input
         document.getElementById('secret').addEventListener('input', function(e) {
+            // Remove spaces and convert to uppercase
             let value = e.target.value.replace(/\s/g, '').toUpperCase();
-            value = value.replace(/[^A-Z2-7]/g, '');
+            
+            // Add spaces every 4 characters for readability
             value = value.replace(/(.{4})/g, '$1 ').trim();
+            
             e.target.value = value;
+        });
+
+        // Add some interactive feedback
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Add copy functionality to code elements
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'CODE') {
+                navigator.clipboard.writeText(e.target.textContent).then(() => {
+                    const originalText = e.target.textContent;
+                    e.target.textContent = 'Copied!';
+                    e.target.style.background = 'linear-gradient(145deg, #c6f6d5, #9ae6b4)';
+                    
+                    setTimeout(() => {
+                        e.target.textContent = originalText;
+                        e.target.style.background = '';
+                    }, 1000);
+                });
+            }
         });
     </script>
 </body>
