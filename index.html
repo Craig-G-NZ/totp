@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOTP QR Code Generator</title>
     <style>
-        /* Your existing styles remain the same */
         * {
             margin: 0;
             padding: 0;
@@ -241,6 +240,16 @@
             font-size: 0.9rem;
         }
 
+        .library-status {
+            background: #e6fffa;
+            color: #234e52;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #38b2ac;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 30px 20px;
@@ -266,6 +275,10 @@
         <div class="header">
             <h1>🔐 TOTP Generator</h1>
             <p>Generate QR codes for Time-based One-Time Password authentication</p>
+        </div>
+
+        <div id="libraryStatus" class="library-status" style="display: none;">
+            <span id="statusText">Loading QR Code library...</span>
         </div>
 
         <form id="totpForm">
@@ -331,19 +344,74 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script>
-        // Check if QRCode library loaded
-        function checkLibraryLoaded() {
-            return typeof QRCode !== 'undefined';
+        let qrCodeLibraryLoaded = false;
+        let loadAttempts = 0;
+        const maxLoadAttempts = 3;
+
+        // CDN URLs to try in order
+        const cdnUrls = [
+            'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+            'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js'
+        ];
+
+        function updateLibraryStatus(message, isError = false) {
+            const statusDiv = document.getElementById('libraryStatus');
+            const statusText = document.getElementById('statusText');
+            statusDiv.style.display = 'block';
+            statusText.textContent = message;
+            
+            if (isError) {
+                statusDiv.style.background = '#fed7d7';
+                statusDiv.style.color = '#c53030';
+                statusDiv.style.borderLeftColor = '#e53e3e';
+            } else {
+                statusDiv.style.background = '#e6fffa';
+                statusDiv.style.color = '#234e52';
+                statusDiv.style.borderLeftColor = '#38b2ac';
+            }
         }
+
+        function loadQRCodeLibrary(urlIndex = 0) {
+            if (urlIndex >= cdnUrls.length) {
+                updateLibraryStatus('❌ Failed to load QR Code library from all CDNs. Please check your internet connection.', true);
+                return;
+            }
+
+            updateLibraryStatus(`📡 Loading QR Code library... (Attempt ${urlIndex + 1}/${cdnUrls.length})`);
+
+            const script = document.createElement('script');
+            script.src = cdnUrls[urlIndex];
+            
+            script.onload = function() {
+                if (typeof QRCode !== 'undefined') {
+                    qrCodeLibraryLoaded = true;
+                    updateLibraryStatus('✅ QR Code library loaded successfully!');
+                    setTimeout(() => {
+                        document.getElementById('libraryStatus').style.display = 'none';
+                    }, 2000);
+                } else {
+                    loadQRCodeLibrary(urlIndex + 1);
+                }
+            };
+            
+            script.onerror = function() {
+                console.error(`Failed to load QR Code library from: ${cdnUrls[urlIndex]}`);
+                loadQRCodeLibrary(urlIndex + 1);
+            };
+            
+            document.head.appendChild(script);
+        }
+
+        // Start loading the library
+        loadQRCodeLibrary();
 
         document.getElementById('totpForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Check if QRCode library is available
-            if (!checkLibraryLoaded()) {
-                showError('QR Code library failed to load. Please refresh the page and try again.');
+            if (!qrCodeLibraryLoaded) {
+                showError('QR Code library is not loaded yet. Please wait a moment and try again.');
                 return;
             }
             
@@ -377,7 +445,7 @@
                 // Create the otpauth URI
                 const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${cleanSecret}&issuer=${encodeURIComponent(issuer)}`;
                 
-                console.log('Generated URI:', uri); // Debug log
+                console.log('Generated URI:', uri);
                 
                 // Generate QR code
                 const canvas = document.getElementById('qrcode');
@@ -403,6 +471,7 @@
                 showLoading(false);
             }
         });
+
 
         function showLoading(show) {
             const loading = document.getElementById('loading');
@@ -445,7 +514,7 @@
             // Remove spaces and convert to uppercase
             let value = e.target.value.replace(/\s/g, '').toUpperCase();
             
-            // Filter out invalid characters
+            // Filter out invalid characters for Base32
             value = value.replace(/[^A-Z2-7]/g, '');
             
             // Add spaces every 4 characters for readability
@@ -454,12 +523,22 @@
             e.target.value = value;
         });
 
-        // Check if library loaded on page load
+        // Test with a sample secret for debugging
+        function testWithSample() {
+            document.getElementById('secret').value = 'JBSW Y3DP EHPK 3PXP';
+            document.getElementById('account').value = 'test@example.com';
+            document.getElementById('issuer').value = 'TestApp';
+        }
+
+        // Add a test button for debugging (remove in production)
         window.addEventListener('load', function() {
-            if (!checkLibraryLoaded()) {
-                console.error('QRCode library failed to load');
-                showError('QR Code library failed to load. Please refresh the page.');
-            }
+            // Uncomment the next line to add a test button for debugging
+            // const testBtn = document.createElement('button');
+            // testBtn.textContent = 'Test with Sample Data';
+            // testBtn.onclick = testWithSample;
+            // testBtn.style.marginTop = '10px';
+            // testBtn.className = 'btn';
+            // document.getElementById('totpForm').appendChild(testBtn);
         });
     </script>
 </body>
