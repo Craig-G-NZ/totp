@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOTP QR Code Generator</title>
     <style>
+        /* Same styles as above */
         * {
             margin: 0;
             padding: 0;
@@ -89,10 +90,6 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .form-control::placeholder {
-            color: #a0aec0;
-        }
-
         .btn {
             width: 100%;
             padding: 15px 30px;
@@ -104,17 +101,11 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
 
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
         }
 
         .btn:disabled {
@@ -164,22 +155,12 @@
             margin-bottom: 20px;
         }
 
-        .qr-code {
-            max-width: 100%;
-            height: auto;
-        }
-
         .secret-display {
             background: #edf2f7;
             padding: 15px;
             border-radius: 8px;
             margin-top: 20px;
             border-left: 4px solid #667eea;
-        }
-
-        .secret-display strong {
-            color: #2d3748;
-            font-size: 0.9rem;
         }
 
         .secret-display code {
@@ -190,31 +171,6 @@
             font-size: 0.9rem;
             color: #2d3748;
             word-break: break-all;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         .error {
@@ -231,42 +187,40 @@
             display: block;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        .library-status {
+        .uri-display {
             background: #e6fffa;
-            color: #234e52;
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-top: 20px;
             border-left: 4px solid #38b2ac;
-            font-size: 0.9rem;
+            text-align: left;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 30px 20px;
-                margin: 10px;
-            }
+        .uri-display code {
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #2d3748;
+            word-break: break-all;
+            display: block;
+            margin-top: 8px;
+        }
 
-            .header h1 {
-                font-size: 2rem;
-            }
+        .qr-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
 
-            .form-control {
-                padding: 12px 16px;
-            }
-
-            .btn {
-                padding: 12px 24px;
-            }
+        .qr-link:hover {
+            background: #5a67d8;
         }
     </style>
 </head>
@@ -275,10 +229,6 @@
         <div class="header">
             <h1>🔐 TOTP Generator</h1>
             <p>Generate QR codes for Time-based One-Time Password authentication</p>
-        </div>
-
-        <div id="libraryStatus" class="library-status" style="display: none;">
-            <span id="statusText">Loading QR Code library...</span>
         </div>
 
         <form id="totpForm">
@@ -321,99 +271,28 @@
             </button>
         </form>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Generating QR code...</p>
-        </div>
-
         <div class="error" id="error"></div>
 
         <div class="qr-result" id="qrResult">
-            <h3>📱 Scan this QR code with your authenticator app</h3>
+            <h3>📱 Use this QR code with your authenticator app</h3>
             <div class="qr-code-container">
-                <canvas id="qrcode"></canvas>
+                <img id="qrcode" alt="TOTP QR Code" style="max-width: 100%; height: auto;">
             </div>
             <div class="secret-display">
                 <strong>Manual Entry Secret:</strong><br>
                 <code id="secretDisplay"></code>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>Compatible with Google Authenticator, Authy, and other TOTP apps</p>
+            <div class="uri-display">
+                <strong>TOTP URI:</strong>
+                <code id="uriDisplay"></code>
+                <a id="qrLink" class="qr-link" target="_blank">Generate QR Code Online</a>
+            </div>
         </div>
     </div>
 
     <script>
-        let qrCodeLibraryLoaded = false;
-        let loadAttempts = 0;
-        const maxLoadAttempts = 3;
-
-        // CDN URLs to try in order
-        const cdnUrls = [
-            'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
-            'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js'
-        ];
-
-        function updateLibraryStatus(message, isError = false) {
-            const statusDiv = document.getElementById('libraryStatus');
-            const statusText = document.getElementById('statusText');
-            statusDiv.style.display = 'block';
-            statusText.textContent = message;
-            
-            if (isError) {
-                statusDiv.style.background = '#fed7d7';
-                statusDiv.style.color = '#c53030';
-                statusDiv.style.borderLeftColor = '#e53e3e';
-            } else {
-                statusDiv.style.background = '#e6fffa';
-                statusDiv.style.color = '#234e52';
-                statusDiv.style.borderLeftColor = '#38b2ac';
-            }
-        }
-
-        function loadQRCodeLibrary(urlIndex = 0) {
-            if (urlIndex >= cdnUrls.length) {
-                updateLibraryStatus('❌ Failed to load QR Code library from all CDNs. Please check your internet connection.', true);
-                return;
-            }
-
-            updateLibraryStatus(`📡 Loading QR Code library... (Attempt ${urlIndex + 1}/${cdnUrls.length})`);
-
-            const script = document.createElement('script');
-            script.src = cdnUrls[urlIndex];
-            
-            script.onload = function() {
-                if (typeof QRCode !== 'undefined') {
-                    qrCodeLibraryLoaded = true;
-                    updateLibraryStatus('✅ QR Code library loaded successfully!');
-                    setTimeout(() => {
-                        document.getElementById('libraryStatus').style.display = 'none';
-                    }, 2000);
-                } else {
-                    loadQRCodeLibrary(urlIndex + 1);
-                }
-            };
-            
-            script.onerror = function() {
-                console.error(`Failed to load QR Code library from: ${cdnUrls[urlIndex]}`);
-                loadQRCodeLibrary(urlIndex + 1);
-            };
-            
-            document.head.appendChild(script);
-        }
-
-        // Start loading the library
-        loadQRCodeLibrary();
-
-        document.getElementById('totpForm').addEventListener('submit', async function(e) {
+        document.getElementById('totpForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            if (!qrCodeLibraryLoaded) {
-                showError('QR Code library is not loaded yet. Please wait a moment and try again.');
-                return;
-            }
             
             const secret = document.getElementById('secret').value.trim().replace(/\s/g, '');
             const account = document.getElementById('account').value.trim() || 'user';
@@ -424,22 +303,19 @@
                 return;
             }
 
-            // Improved secret validation (Base32)
+            // Validate secret (Base32)
             const cleanSecret = secret.replace(/\s/g, '').toUpperCase();
             if (!/^[A-Z2-7]+=*$/.test(cleanSecret)) {
                 showError('Invalid TOTP secret format. Please use a valid Base32 string (A-Z, 2-7).');
                 return;
             }
 
-            // Check secret length (should be reasonable)
             if (cleanSecret.length < 16) {
                 showError('TOTP secret seems too short. Please check your secret key.');
                 return;
             }
 
-            showLoading(true);
             hideError();
-            hideResult();
 
             try {
                 // Create the otpauth URI
@@ -447,46 +323,25 @@
                 
                 console.log('Generated URI:', uri);
                 
-                // Generate QR code
-                const canvas = document.getElementById('qrcode');
-                await QRCode.toCanvas(canvas, uri, {
-                    width: 256,
-                    margin: 2,
-                    color: {
-                        dark: '#2d3748',
-                        light: '#ffffff'
-                    },
-                    errorCorrectionLevel: 'M'
-                });
-
-                // Display the secret
+                // Display the secret and URI
                 document.getElementById('secretDisplay').textContent = cleanSecret;
+                document.getElementById('uriDisplay').textContent = uri;
+                
+                // Generate QR code using online service
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(uri)}`;
+                document.getElementById('qrcode').src = qrCodeUrl;
+                
+                // Set up the online QR generator link
+                const qrLink = document.getElementById('qrLink');
+                qrLink.href = `https://www.qr-code-generator.com/solutions/text-qr-code/?text=${encodeURIComponent(uri)}`;
                 
                 showResult();
-                showLoading(false);
                 
             } catch (error) {
                 console.error('Error generating QR code:', error);
                 showError(`Failed to generate QR code: ${error.message || 'Unknown error'}`);
-                showLoading(false);
             }
         });
-
-
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const btn = document.getElementById('generateBtn');
-            
-            if (show) {
-                loading.classList.add('show');
-                btn.disabled = true;
-                btn.textContent = 'Generating...';
-            } else {
-                loading.classList.remove('show');
-                btn.disabled = false;
-                btn.textContent = 'Generate QR Code';
-            }
-        }
 
         function showError(message) {
             const error = document.getElementById('error');
@@ -504,41 +359,12 @@
             result.classList.add('show');
         }
 
-        function hideResult() {
-            const result = document.getElementById('qrResult');
-            result.classList.remove('show');
-        }
-
         // Auto-format secret input
         document.getElementById('secret').addEventListener('input', function(e) {
-            // Remove spaces and convert to uppercase
             let value = e.target.value.replace(/\s/g, '').toUpperCase();
-            
-            // Filter out invalid characters for Base32
             value = value.replace(/[^A-Z2-7]/g, '');
-            
-            // Add spaces every 4 characters for readability
             value = value.replace(/(.{4})/g, '$1 ').trim();
-            
             e.target.value = value;
-        });
-
-        // Test with a sample secret for debugging
-        function testWithSample() {
-            document.getElementById('secret').value = 'JBSW Y3DP EHPK 3PXP';
-            document.getElementById('account').value = 'test@example.com';
-            document.getElementById('issuer').value = 'TestApp';
-        }
-
-        // Add a test button for debugging (remove in production)
-        window.addEventListener('load', function() {
-            // Uncomment the next line to add a test button for debugging
-            // const testBtn = document.createElement('button');
-            // testBtn.textContent = 'Test with Sample Data';
-            // testBtn.onclick = testWithSample;
-            // testBtn.style.marginTop = '10px';
-            // testBtn.className = 'btn';
-            // document.getElementById('totpForm').appendChild(testBtn);
         });
     </script>
 </body>
