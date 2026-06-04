@@ -1,842 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b1220" />
     <title>TOTP QR Code Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 50%, #1e3a8a 100%);
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Animated background elements */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: float 20s ease-in-out infinite;
-            z-index: -1;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 
-                0 32px 64px rgba(0, 0, 0, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #2563eb, #1e40af, #1e3a8a);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .header {
-            text-align: center;
-            padding: 40px 40px 20px;
-            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(30, 64, 175, 0.1));
-        }
-
-        .header h1 {
-            color: #1a202c;
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(135deg, #2563eb, #1e40af);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            color: #4a5568;
-            font-size: 1.2rem;
-            font-weight: 500;
-            opacity: 0.8;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            padding: 40px;
-            min-height: 500px;
-        }
-
-        .form-column {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .form-group {
-            position: relative;
-            margin-bottom: 32px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 12px;
-            color: #2d3748;
-            font-weight: 600;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: linear-gradient(145deg, #ffffff, #f7fafc);
-            box-shadow: 
-                inset 2px 2px 5px rgba(0, 0, 0, 0.1),
-                inset -2px -2px 5px rgba(255, 255, 255, 0.8);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #2563eb;
-            background: #ffffff;
-            box-shadow: 
-                0 0 0 4px rgba(37, 99, 235, 0.1),
-                inset 2px 2px 5px rgba(37, 99, 235, 0.1),
-                inset -2px -2px 5px rgba(255, 255, 255, 0.9);
-            transform: translateY(-2px);
-        }
-
-        .form-control::placeholder {
-            color: #a0aec0;
-            font-style: italic;
-        }
-
-        /* 3D Button Styles */
-        .btn-3d {
-            position: relative;
-            width: 100%;
-            padding: 18px 32px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #ffffff;
-            background: linear-gradient(145deg, #2563eb, #1e40af);
-            border: none;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 8px 16px rgba(37, 99, 235, 0.3),
-                0 4px 8px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            overflow: hidden;
-        }
-
-        .btn-3d::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-3d:hover {
-            transform: translateY(-4px);
-            box-shadow: 
-                0 12px 24px rgba(37, 99, 235, 0.4),
-                0 8px 16px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-
-        .btn-3d:hover::before {
-            left: 100%;
-        }
-
-        .btn-3d:active {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 6px 12px rgba(37, 99, 235, 0.3),
-                0 2px 4px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-3d:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: 
-                0 4px 8px rgba(37, 99, 235, 0.2),
-                0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .result-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #f7fafc, #edf2f7);
-            border-radius: 20px;
-            padding: 40px;
-            border: 2px solid #e2e8f0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .result-column::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            animation: float 15s ease-in-out infinite reverse;
-        }
-
-        .placeholder-content {
-            text-align: center;
-            color: #a0aec0;
-            z-index: 1;
-        }
-
-        .placeholder-content .icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .placeholder-content h3 {
-            font-size: 1.5rem;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .placeholder-content p {
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-
-        .qr-result {
-            display: none;
-            text-align: center;
-            width: 100%;
-            z-index: 1;
-        }
-
-        .qr-result.show {
-            display: block;
-            animation: slideInRight 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .qr-result h3 {
-            color: #2d3748;
-            margin-bottom: 24px;
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
-
-        .qr-code-container {
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 20px;
-            display: inline-block;
-            box-shadow: 
-                0 16px 32px rgba(0, 0, 0, 0.1),
-                0 0 0 1px rgba(0, 0, 0, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .qr-code-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(240, 147, 251, 0.05));
-            z-index: -1;
-        }
-
-        .qr-code-container img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-        }
-
-        .info-card {
-            background: linear-gradient(145deg, #ffffff, #f7fafc);
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 20px;
-            border-left: 4px solid #667eea;
-            box-shadow: 
-                0 8px 16px rgba(0, 0, 0, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        .info-card strong {
-            color: #2d3748;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-card code {
-            background: linear-gradient(145deg, #e2e8f0, #edf2f7);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            color: #2d3748;
-            word-break: break-all;
-            display: block;
-            margin-top: 8px;
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .uri-card {
-            background: linear-gradient(145deg, #e6fffa, #b2f5ea);
-            border-left-color: #38b2ac;
-        }
-
-        .error {
-            background: linear-gradient(145deg, #fed7d7, #feb2b2);
-            color: #c53030;
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border-left: 4px solid #e53e3e;
-            display: none;
-            box-shadow: 0 4px 8px rgba(229, 62, 62, 0.2);
-        }
-
-        .error.show {
-            display: block;
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-            z-index: 1;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading p {
-            color: #4a5568;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 30px;
-                padding: 20px;
-            }
-
-            .header {
-                padding: 30px 20px 15px;
-            }
-
-            .header h1 {
-                font-size: 2.5rem;
-            }
-
-            .form-control {
-                padding: 14px 16px;
-            }
-
-            .btn-3d {
-                padding: 16px 24px;
-                font-size: 1rem;
-            }
-
-            .result-column {
-                padding: 30px 20px;
-            }
-
-            .qr-code-container {
-                padding: 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                margin: 10px;
-                border-radius: 16px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .header p {
-                font-size: 1rem;
-            }
-
-            .main-content {
-                padding: 15px;
-                gap: 20px;
-            }
-
-            .form-control {
-                padding: 12px 14px;
-                font-size: 0.95rem;
-            }
-
-            .btn-3d {
-                padding: 14px 20px;
-                font-size: 0.95rem;
-            }
-        }
-
-        /* Success animation */
-        .success-pulse {
-            animation: successPulse 0.6s ease-out;
-        }
-
-        @keyframes successPulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
-            }
-            70% {
-                transform: scale(1.05);
-                box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
-            }
-        }
-
-        /* Tooltip styles */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: #2d3748;
-            color: #fff;
-            text-align: center;
-            border-radius: 8px;
-            padding: 8px 12px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.85rem;
-        }
-
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #2d3748 transparent transparent transparent;
-        }
-
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔐 TOTP Generator</h1>
-            <p>Professional QR Code Generator for Time-based One-Time Password Authentication</p>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="app-shell__accent" aria-hidden="true"></div>
+
+      <header class="site-header">
+        <div class="site-brand">
+          <div class="site-logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M16 8a5 5 0 0 0-5 5v2h2v-2a3 3 0 1 1 6 0v2h2v-2a5 5 0 0 0-5-5z"
+                fill="#ea580c"
+              />
+              <rect x="11" y="17" width="10" height="8" rx="2" fill="#f8fafc" />
+              <circle cx="16" cy="21" r="1.5" fill="#c2410c" />
+            </svg>
+          </div>
+          <div>
+            <p class="site-eyebrow">Gill Family</p>
+            <h1 class="site-title">TOTP QR Generator</h1>
+            <p class="site-lead">
+              Create a scannable QR code for time-based one-time password apps.
+            </p>
+          </div>
         </div>
+      </header>
 
-        <div class="main-content">
-            <!-- Left Column - Form -->
-            <div class="form-column">
-                <form id="totpForm">
-                    <div class="form-group">
-                        <label for="secret">
-                            🔑 TOTP Secret *
-                            <span class="tooltip">
-                                ℹ️
-                                <span class="tooltiptext">Base32 encoded secret key (A-Z, 2-7)</span>
-                            </span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="secret" 
-                            name="secret" 
-                            class="form-control" 
-                            placeholder="Enter your TOTP secret key (e.g., JBSWY3DPEHPK3PXP)"
-                            required
-                            autocomplete="off"
-                        >
-                    </div>
+      <main class="page">
+        <div class="page-layout">
+          <section class="form-stack" aria-label="TOTP settings">
+            <form id="totpForm">
+              <div class="form-field">
+                <label for="secret">
+                  TOTP secret
+                  <span class="field-hint">(required, Base32)</span>
+                </label>
+                <input
+                  type="text"
+                  id="secret"
+                  name="secret"
+                  placeholder="e.g. JBSWY3DPEHPK3PXP"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
 
-                    <div class="form-group">
-                        <label for="account">
-                            👤 Account Name
-                            <span class="tooltip">
-                                ℹ️
-                                <span class="tooltiptext">Usually your email or username</span>
-                            </span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="account" 
-                            name="account" 
-                            class="form-control" 
-                            placeholder="e.g., john.doe@example.com"
-                            value="user@example.com"
-                        >
-                    </div>
+              <div class="form-field">
+                <label for="account">
+                  Account name
+                  <span class="field-hint">(email or username)</span>
+                </label>
+                <input
+                  type="text"
+                  id="account"
+                  name="account"
+                  placeholder="e.g. you@example.com"
+                  value="user@example.com"
+                  autocomplete="username"
+                />
+              </div>
 
-                    <div class="form-group">
-                        <label for="issuer">
-                            🏢 Issuer
-                            <span class="tooltip">
-                                ℹ️
-                                <span class="tooltiptext">Service or company name</span>
-                            </span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="issuer" 
-                            name="issuer" 
-                            class="form-control" 
-                            placeholder="e.g., MyCompany"
-                            value="MyApp"
-                        >
-                    </div>
+              <div class="form-field">
+                <label for="issuer">
+                  Issuer
+                  <span class="field-hint">(service or company)</span>
+                </label>
+                <input
+                  type="text"
+                  id="issuer"
+                  name="issuer"
+                  placeholder="e.g. MyCompany"
+                  value="MyApp"
+                />
+              </div>
 
-                    <button type="submit" class="btn-3d" id="generateBtn">
-                        <span>🚀 Generate QR Code</span>
-                    </button>
-                </form>
+              <button type="submit" class="btn btn--primary" id="generateBtn">
+                Generate QR code
+              </button>
+            </form>
 
-                <div class="error" id="error"></div>
+            <p
+              id="error"
+              class="status-message status-message--error"
+              role="alert"
+              hidden
+            ></p>
 
-                <!-- Instructions Card -->
-                <div class="info-card">
-                    <strong>📋 Instructions</strong>
-                    <p style="margin-top: 8px; color: #4a5568; line-height: 1.6;">
-                        1. Enter your TOTP secret key<br>
-                        2. Customize account name and issuer<br>
-                        3. Click generate to create QR code<br>
-                        4. Scan with your authenticator app
-                    </p>
-                </div>
+            <aside class="help-card">
+              <p class="help-card__title">How to use</p>
+              <ol>
+                <li>Enter your Base32 TOTP secret.</li>
+                <li>Set the account name and issuer shown in your app.</li>
+                <li>Generate the QR code and scan it with your authenticator.</li>
+                <li>Click secret or URI below to copy for manual entry.</li>
+              </ol>
+            </aside>
+          </section>
+
+          <section class="preview-panel" aria-label="QR code preview">
+            <h2 class="preview-panel__title">Preview</h2>
+
+            <div class="empty-state" id="placeholder">
+              <div class="empty-state__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <path d="M14 14h3v3h-3v-3zm4 0h3v3h-3v-3zm-4 4h3v3h-3v-3zm4 0h3v3h-3v-3z" fill="currentColor"/>
+                </svg>
+              </div>
+              <p class="empty-state__title">No QR code yet</p>
+              <p class="empty-state__text">
+                Fill in your details and generate a code to preview it here.
+              </p>
             </div>
 
-            <!-- Right Column - Results -->
-            <div class="result-column">
-                <div class="placeholder-content" id="placeholder">
-                    <div class="icon">📱</div>
-                    <h3>QR Code Preview</h3>
-                    <p>Enter your TOTP details on the left and click "Generate QR Code" to see your scannable QR code here.</p>
-                </div>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>Generating your QR code...</p>
-                </div>
-
-                <div class="qr-result" id="qrResult">
-                    <h3>📱 Scan with your authenticator app</h3>
-                    <div class="qr-code-container">
-                        <div id="qrcode"></div>
-                    </div>
-                    
-                    <div class="info-card">
-                        <strong>🔐 Manual Entry Secret</strong>
-                        <code id="secretDisplay"></code>
-                    </div>
-                    
-                    <div class="info-card uri-card">
-                        <strong>🔗 Generated URI</strong>
-                        <code id="uriDisplay"></code>
-                    </div>
-                </div>
+            <div class="loading" id="loading" hidden>
+              <div class="spinner" aria-hidden="true"></div>
+              <p>Generating QR code…</p>
             </div>
+
+            <div class="qr-result" id="qrResult" hidden>
+              <p class="qr-result__heading">Scan with your authenticator app</p>
+              <div class="qr-code-wrap">
+                <div id="qrcode"></div>
+              </div>
+
+              <div class="detail-card">
+                <span class="detail-card__label">Manual entry secret</span>
+                <code
+                  class="detail-card__value"
+                  id="secretDisplay"
+                  data-copy=""
+                  title="Click to copy"
+                ></code>
+              </div>
+
+              <div class="detail-card detail-card--uri">
+                <span class="detail-card__label">otpauth URI</span>
+                <code
+                  class="detail-card__value"
+                  id="uriDisplay"
+                  data-copy=""
+                  title="Click to copy"
+                ></code>
+              </div>
+            </div>
+          </section>
         </div>
+      </main>
+
+      <footer class="site-footer">
+        Secrets stay in your browser — nothing is sent to a server.
+      </footer>
     </div>
 
-    <!-- Load QR code library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script>
-        // Check if QR code library loaded
-        let qrLibraryLoaded = false;
-        
-        // Try to load the library and set flag
-        window.addEventListener('load', function() {
-            if (typeof qrcode !== 'undefined') {
-                qrLibraryLoaded = true;
-                console.log('QR code library loaded successfully');
-            } else {
-                showError('QR code library failed to load. Please refresh the page.');
-            }
-        });
-
-        document.getElementById('totpForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const secret = document.getElementById('secret').value.trim().replace(/\s/g, '');
-            const account = document.getElementById('account').value.trim() || 'user@example.com';
-            const issuer = document.getElementById('issuer').value.trim() || 'MyApp';
-            
-            if (!secret) {
-                showError('Please enter a TOTP secret');
-                return;
-            }
-
-            // Validate secret (should be base32)
-            if (!/^[A-Z2-7]+=*$/i.test(secret)) {
-                showError('Invalid TOTP secret format. Please use a valid Base32 string (A-Z, 2-7).');
-                return;
-            }
-
-            if (!qrLibraryLoaded) {
-                showError('QR code library not loaded. Please refresh the page and try again.');
-                return;
-            }
-
-            showLoading(true);
-            hideError();
-            hideResult();
-            hidePlaceholder();
-
-            try {
-                // Create the otpauth URI
-                const uri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(account)}?secret=${secret.toUpperCase()}&issuer=${encodeURIComponent(issuer)}`;
-                
-                // Generate QR code using qrcode-generator library
-                const qr = qrcode(0, 'M');
-                qr.addData(uri);
-                qr.make();
-                
-                // Create the QR code as SVG with custom styling
-                const qrSvg = qr.createSvgTag({
-                    cellSize: 4,
-                    margin: 4,
-                    scalable: true
-                });
-                
-                // Display the QR code
-                document.getElementById('qrcode').innerHTML = qrSvg;
-                
-                // Style the SVG
-                const svgElement = document.querySelector('#qrcode svg');
-                if (svgElement) {
-                    svgElement.style.width = '100%';
-                    svgElement.style.height = 'auto';
-                    svgElement.style.maxWidth = '256px';
-                }
-                
-                // Display the secret and URI
-                document.getElementById('secretDisplay').textContent = secret.toUpperCase();
-                document.getElementById('uriDisplay').textContent = uri;
-                
-                showResult();
-                showLoading(false);
-                
-                // Add success animation to button
-                const btn = document.getElementById('generateBtn');
-                btn.classList.add('success-pulse');
-                setTimeout(() => btn.classList.remove('success-pulse'), 600);
-                
-            } catch (error) {
-                console.error('Error generating QR code:', error);
-                showError(`Failed to generate QR code: ${error.message}`);
-                showLoading(false);
-                showPlaceholder();
-            }
-        });
-
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const btn = document.getElementById('generateBtn');
-            
-            if (show) {
-                loading.classList.add('show');
-                btn.disabled = true;
-                btn.innerHTML = '<span>⏳ Generating...</span>';
-            } else {
-                loading.classList.remove('show');
-                btn.disabled = false;
-                btn.innerHTML = '<span>🚀 Generate QR Code</span>';
-            }
-        }
-
-        function showError(message) {
-            const error = document.getElementById('error');
-            error.textContent = message;
-            error.classList.add('show');
-            
-            // Auto-hide error after 5 seconds
-            setTimeout(() => {
-                error.classList.remove('show');
-            }, 5000);
-        }
-
-        function hideError() {
-            const error = document.getElementById('error');
-            error.classList.remove('show');
-        }
-
-        function showResult() {
-            const result = document.getElementById('qrResult');
-            result.classList.add('show');
-        }
-
-        function hideResult() {
-            const result = document.getElementById('qrResult');
-            result.classList.remove('show');
-        }
-
-        function showPlaceholder() {
-            const placeholder = document.getElementById('placeholder');
-            placeholder.style.display = 'block';
-        }
-
-        function hidePlaceholder() {
-            const placeholder = document.getElementById('placeholder');
-            placeholder.style.display = 'none';
-        }
-
-        // Auto-format secret input
-        document.getElementById('secret').addEventListener('input', function(e) {
-            // Remove spaces and convert to uppercase
-            let value = e.target.value.replace(/\s/g, '').toUpperCase();
-            
-            // Add spaces every 4 characters for readability
-            value = value.replace(/(.{4})/g, '$1 ').trim();
-            
-            e.target.value = value;
-        });
-
-        // Add some interactive feedback
-        document.querySelectorAll('.form-control').forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'translateY(-2px)';
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'translateY(0)';
-            });
-        });
-
-        // Add copy functionality to code elements
-        document.addEventListener('click', function(e) {
-            if (e.target.tagName === 'CODE') {
-                navigator.clipboard.writeText(e.target.textContent).then(() => {
-                    const originalText = e.target.textContent;
-                    e.target.textContent = 'Copied!';
-                    e.target.style.background = 'linear-gradient(145deg, #c6f6d5, #9ae6b4)';
-                    
-                    setTimeout(() => {
-                        e.target.textContent = originalText;
-                        e.target.style.background = '';
-                    }, 1000);
-                });
-            }
-        });
-    </script>
-</body>
+    <script src="/js/app.js"></script>
+  </body>
 </html>
