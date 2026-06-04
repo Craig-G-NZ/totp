@@ -201,13 +201,23 @@ body::before {
 .form-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-6);
+}
+
+.form-stack form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-stack form .btn--primary {
+  margin-top: var(--space-2);
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-width: 0;
 }
 
