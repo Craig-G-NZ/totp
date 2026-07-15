@@ -2,19 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1220" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
+    <meta name="theme-color" content="#e8eef4" />
     <title>TOTP QR Code Generator</title>
     <script>
       (function () {
-        var k = "totp-theme";
-        var t = localStorage.getItem(k);
-        if (t !== "light" && t !== "dark") {
-          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-        }
-        document.documentElement.setAttribute("data-theme", t);
-        var m = document.querySelector('meta[name="theme-color"]');
-        if (m) m.content = t === "dark" ? "#020617" : "#0b1220";
+        try {
+          var k = "totp-theme";
+          var t = localStorage.getItem(k);
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", t === "dark" ? "#0b1220" : "#e8eef4");
+        } catch (e) {}
       })();
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -27,11 +32,11 @@
     />
   </head>
   <body>
-    <div class="app-shell">
+    <div class="app-shell app-shell--wide">
       <div class="app-shell__accent" aria-hidden="true"></div>
 
       <header class="site-header">
-        <div class="site-header__row">
+        <div class="site-header__top">
           <div class="site-brand">
             <div class="site-logo" aria-hidden="true">
               <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +48,7 @@
                 <circle cx="16" cy="21" r="1.5" fill="#c2410c" />
               </svg>
             </div>
-            <div>
+            <div class="site-brand__text">
               <p class="site-eyebrow">Gill Family</p>
               <h1 class="site-title">TOTP QR Generator</h1>
               <p class="site-lead">
@@ -51,42 +56,40 @@
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            class="theme-toggle"
-            id="themeToggle"
-            aria-pressed="false"
-            aria-label="Switch to dark mode"
-            title="Dark mode"
-          >
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--sun"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" />
-              <path
-                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-            <svg
-              class="theme-toggle__icon theme-toggle__icon--moon"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+          <div class="site-header__actions">
+            <div class="site-header__toolbar site-header__toolbar--end">
+              <button
+                type="button"
+                class="theme-toggle"
+                id="theme-toggle"
+                aria-label="Switch to dark mode"
+                title="Dark mode"
+                aria-pressed="false"
+              >
+                <svg
+                  class="theme-toggle__icon theme-toggle__icon--sun"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path
+                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                  />
+                </svg>
+                <svg
+                  class="theme-toggle__icon theme-toggle__icon--moon"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
