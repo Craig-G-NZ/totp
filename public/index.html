@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"
+    />
+    <meta name="theme-color" content="#e8eef4" />
+    <title>TOTP QR Code Generator</title>
+    <script>
+      (function () {
+        try {
+          var k = "totp-theme";
+          var t = localStorage.getItem(k);
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute("content", t === "dark" ? "#0b1220" : "#e8eef4");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-shell app-shell--wide">
+      <div class="app-shell__accent" aria-hidden="true"></div>
+
+      <header class="site-header">
+        <div class="site-header__top">
+          <div class="site-brand">
+            <div class="site-logo" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M16 8a5 5 0 0 0-5 5v2h2v-2a3 3 0 1 1 6 0v2h2v-2a5 5 0 0 0-5-5z"
+                  fill="#ea580c"
+                />
+                <rect x="11" y="17" width="10" height="8" rx="2" fill="#f8fafc" />
+                <circle cx="16" cy="21" r="1.5" fill="#c2410c" />
+              </svg>
+            </div>
+            <div class="site-brand__text">
+              <p class="site-eyebrow">Gill Family</p>
+              <h1 class="site-title">TOTP QR Generator</h1>
+              <p class="site-lead">
+                Create a scannable QR code for time-based one-time password apps.
+              </p>
+            </div>
+          </div>
+          <div class="site-header__actions">
+            <div class="site-header__toolbar site-header__toolbar--end">
+              <button
+                type="button"
+                class="theme-toggle"
+                id="theme-toggle"
+                aria-label="Switch to dark mode"
+                title="Dark mode"
+                aria-pressed="false"
+              >
+                <svg
+                  class="theme-toggle__icon theme-toggle__icon--sun"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path
+                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                  />
+                </svg>
+                <svg
+                  class="theme-toggle__icon theme-toggle__icon--moon"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page">
+        <div class="page-layout">
+          <section class="form-stack" aria-label="TOTP settings">
+            <form id="totpForm">
+              <div class="form-field">
+                <label for="secret">
+                  TOTP secret
+                  <span class="field-hint">(required, Base32)</span>
+                </label>
+                <input
+                  type="text"
+                  id="secret"
+                  name="secret"
+                  placeholder="e.g. JBSWY3DPEHPK3PXP"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="account">
+                  Account name
+                  <span class="field-hint">(email or username)</span>
+                </label>
+                <input
+                  type="text"
+                  id="account"
+                  name="account"
+                  placeholder="e.g. you@example.com"
+                  value="user@example.com"
+                  autocomplete="username"
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="issuer">
+                  Issuer
+                  <span class="field-hint">(service or company)</span>
+                </label>
+                <input
+                  type="text"
+                  id="issuer"
+                  name="issuer"
+                  placeholder="e.g. MyCompany"
+                  value="MyApp"
+                />
+              </div>
+
+              <button type="submit" class="btn btn--primary" id="generateBtn">
+                Generate QR code
+              </button>
+            </form>
+
+            <p
+              id="error"
+              class="status-message status-message--error"
+              role="alert"
+              hidden
+            ></p>
+
+            <aside class="help-card">
+              <p class="help-card__title">How to use</p>
+              <ol>
+                <li>Enter your Base32 TOTP secret.</li>
+                <li>Set the account name and issuer shown in your app.</li>
+                <li>Generate the QR code and scan it with your authenticator.</li>
+                <li>Click secret or URI below to copy for manual entry.</li>
+              </ol>
+            </aside>
+          </section>
+
+          <section class="preview-panel" aria-label="QR code preview">
+            <h2 class="preview-panel__title">Preview</h2>
+
+            <div class="empty-state" id="placeholder">
+              <div class="empty-state__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+                  <path d="M14 14h3v3h-3v-3zm4 0h3v3h-3v-3zm-4 4h3v3h-3v-3zm4 0h3v3h-3v-3z" fill="currentColor"/>
+                </svg>
+              </div>
+              <p class="empty-state__title">No QR code yet</p>
+              <p class="empty-state__text">
+                Fill in your details and generate a code to preview it here.
+              </p>
+            </div>
+
+            <div class="loading" id="loading" hidden>
+              <div class="spinner" aria-hidden="true"></div>
+              <p>Generating QR code…</p>
+            </div>
+
+            <div class="qr-result" id="qrResult" hidden>
+              <p class="qr-result__heading">Scan with your authenticator app</p>
+              <div class="qr-code-wrap">
+                <div id="qrcode"></div>
+              </div>
+
+              <div class="detail-card">
+                <span class="detail-card__label">Manual entry secret</span>
+                <code
+                  class="detail-card__value"
+                  id="secretDisplay"
+                  data-copy=""
+                  title="Click to copy"
+                ></code>
+              </div>
+
+              <div class="detail-card detail-card--uri">
+                <span class="detail-card__label">otpauth URI</span>
+                <code
+                  class="detail-card__value"
+                  id="uriDisplay"
+                  data-copy=""
+                  title="Click to copy"
+                ></code>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        Secrets stay in your browser — nothing is sent to a server.
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>
