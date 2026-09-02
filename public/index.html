@@ -10,16 +10,19 @@
     <title>TOTP QR Code Generator</title>
     <script>
       (function () {
+        var k = "totp-theme";
+        var t = null;
         try {
-          var k = "totp-theme";
-          var t = localStorage.getItem(k);
-          if (t !== "light" && t !== "dark") {
-            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-          }
-          document.documentElement.setAttribute("data-theme", t);
-          var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute("content", t === "dark" ? "#0b1220" : "#e8eef4");
-        } catch (e) {}
+          t = localStorage.getItem(k);
+        } catch (err) {
+          t = null;
+        }
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = t;
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.content = t === "dark" ? "#0b1220" : "#e8eef4";
       })();
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -223,7 +226,11 @@
       </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"
+      integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz"
+      crossorigin="anonymous"
+    ></script>
     <script src="/js/theme.js"></script>
     <script src="/js/app.js"></script>
   </body>

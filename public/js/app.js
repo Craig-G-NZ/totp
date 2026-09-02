@@ -101,7 +101,7 @@
 
   document.addEventListener("click", function (e) {
     const valueEl = e.target.closest(".detail-card__value");
-    if (!valueEl || !valueEl.dataset.copy) return;
+    if (!valueEl?.dataset.copy) return;
 
     const original = valueEl.dataset.copy;
     navigator.clipboard.writeText(original).then(function () {

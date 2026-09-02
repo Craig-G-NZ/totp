@@ -12,8 +12,10 @@
       if (saved === "light" || saved === "dark") {
         return saved;
       }
-    } catch (e) {
-      /* private browsing */
+    } catch {
+      // localStorage may be blocked (private browsing, strict privacy settings).
+      // Caller falls back to the system color scheme via resolveTheme().
+      return null;
     }
     return null;
   }
@@ -28,11 +30,11 @@
 
   function applyTheme(theme) {
     var next = theme === "dark" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.dataset.theme = next;
 
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute("content", THEME_COLORS[next]);
+      meta.content = THEME_COLORS[next];
     }
 
     var toggle = document.getElementById("theme-toggle");
@@ -51,17 +53,14 @@
     var next = theme === "dark" ? "dark" : "light";
     try {
       localStorage.setItem(STORAGE_KEY, next);
-    } catch (e) {
-      /* ignore */
+    } catch (err) {
+      /* Theme still applies for this session; storage may be blocked. */
     }
     applyTheme(next);
   }
 
   function toggleTheme() {
-    var current =
-      document.documentElement.getAttribute("data-theme") === "dark"
-        ? "dark"
-        : "light";
+    var current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
     setTheme(current === "dark" ? "light" : "dark");
   }
 

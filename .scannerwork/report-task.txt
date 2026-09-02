@@ -1,0 +1,7 @@
+organization=craig-g-nz
+projectKey=Craig-G-NZ_totp
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.103882
+dashboardUrl=https://sonarcloud.io/dashboard?id=Craig-G-NZ_totp
+ceTaskId=AaBhpyK-250mO1idwgbT
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AaBhpyK-250mO1idwgbT
